@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import Index from './components/index.vue'
+import Home from './pages/Home.vue'
 </script>
 
 <template>
-  <Index />
+  <Home />
 </template>
