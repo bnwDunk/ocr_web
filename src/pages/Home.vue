@@ -110,7 +110,7 @@ const downloadFile = () => {
       </main>
 
       <footer class="mt-20 text-center text-gray-500/40 text-sm">
-        <p>© 2026 Internal OCR Tool · Private & Secure</p>
+        <p>© 2026 Internal OCR Tool</p>
       </footer>
     </div>
   </div>
