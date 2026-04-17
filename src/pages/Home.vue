@@ -16,11 +16,13 @@ const result = ref<any>(null)
 const handleFilesUpdate = (newFiles: File[]) => {
   files.value = newFiles
   result.value = null // Clear result when file changes
+  finalTime.value = null
 }
 
 const handleRemoveFile = (idx: number) => {
   files.value.splice(idx, 1)
   result.value = null
+  finalTime.value = null
 }
 
 const uploadAndProcess = async () => {
@@ -44,20 +46,39 @@ const uploadAndProcess = async () => {
       body: formData 
     })
     
+    if (!response.ok) throw new Error("OCR Failed")
+    
     result.value = await response.json()
     finalTime.value = Math.floor((Date.now() - startTime) / 1000)
   } catch (err) {
     console.error(err)
-    alert("Error connecting to server. Please ensure the backend API is running.")
+    alert("Error processing document. Please check if the backend is running.")
   } finally {
     clearInterval(timerInterval)
     isUploading.value = false
   }
 }
 
-const downloadFile = () => {
-  if (result.value?.excel_download) {
-    window.open(`${API_BASE}${result.value.excel_download}`, '_blank')
+const handleSaveSelected = async (selectedData: Record<string, string[][]>) => {
+  try {
+    const response = await fetch(`${API_BASE}/save-excel`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        filename: result.value.filename,
+        selected_data: selectedData
+      })
+    })
+
+    if (!response.ok) throw new Error("Save Failed")
+    
+    const saveResult = await response.json()
+    if (saveResult.excel_download) {
+      window.open(`${API_BASE}${saveResult.excel_download}`, '_blank')
+    }
+  } catch (err) {
+    console.error(err)
+    alert("Error generating Excel file.")
   }
 }
 </script>
@@ -86,7 +107,7 @@ const downloadFile = () => {
           <div class="p-4 rounded-full bg-purple-500/10 border border-purple-500/20">
             <svg class="w-10 h-10 text-purple-400 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path> 
             </svg>
           </div>
           <div class="flex flex-col items-center gap-1">
@@ -104,7 +125,7 @@ const downloadFile = () => {
           </div>
           <ResultPanel 
             :result="result" 
-            @download="downloadFile"
+            @save-selected="handleSaveSelected"
           />
         </div>
       </main>
